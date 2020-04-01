@@ -1,7 +1,10 @@
 # Kafka-to-MySQL Connector
 
-Kafka-to-MySQL Connector is a Python application that consumes kafka events and
-record them in a MySQL database
+Kafka-to-MySQL Connector is a Python application that consumes kafka events and record them in a MySQL database. 
+Kafka workers are isolated in docker containers under the same consumer group and use a Zookeeper instance to self balance the consumption procedure.
+
+![enter image description here](https://i.ibb.co/gFyqH9N/kafka.jpg)
+
 
 ## Prepare the MySQL Database
 MySql scripts directory
