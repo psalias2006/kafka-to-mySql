@@ -94,7 +94,6 @@ class mySql:
 
 
 
-
 class kafkaConsumer:
 
 	def __init__(self, name, kafkaHost, kafkaTopic):
@@ -114,6 +113,24 @@ class kafkaConsumer:
 		return dt
 
 
+	def _cleanJson(self, msgJson):
+		msgDf	= pd.DataFrame(msgJson, columns = ['id', 
+							   'customer_id', 
+							   'created_at',
+                                                           'text', 
+							   'ad_type', 
+							   'price', 
+							   'currency',
+                                                           'payment_type', 
+							   'payment_cost'])
+
+		msgDf			= msgDf.replace({pd.np.nan: 'NULL'})
+		msgDf['created_at']	= msgDf['created_at'].apply(self._convertIsoDatetime)
+		list_dict		= msgDf.T.to_dict().values()
+
+		return list_dict
+
+
 	def _insertMySql(self, msgList):
 		msgJson = []
 		mm = self.mySql
@@ -125,15 +142,9 @@ class kafkaConsumer:
 				logging.info(m)
 				#print(m)
 		
-		msgDf   = pd.DataFrame(msgJson, columns = ['id', 'customer_id', 'created_at', 
-                                                           'text', 'ad_type', 'price', 'currency', 
-                                                           'payment_type', 'payment_cost'])
-
-		msgDf	= msgDf.replace({pd.np.nan: 'NULL'})
-		msgDf['created_at'] = msgDf['created_at'].apply(self._convertIsoDatetime)
-		list_dict = msgDf.T.to_dict().values()
-
+		list_dict = self._cleanJson(msgJson)
 		mm.sqlBulkInsert(list_dict)
+
 		return
 
 
@@ -158,14 +169,16 @@ class kafkaConsumer:
 					logging.info('{} kafka message offset consumed'.format(message.offset))
 					self._insertMySql(msgList)
 					msgList = []
-					#time.sleep(5)
 		return
 
 
 
 def main():
 	kafkaStream = kafkaConsumer('testConsumer', KAFKA_HOST, KAFKA_TOPIC)
-	kafkaStream.consume()
+
+	while True:
+		try: kafkaStream.consume()
+		except Exception as ex: logging.info(ex)
 
 	return
 
