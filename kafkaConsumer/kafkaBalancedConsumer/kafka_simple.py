@@ -133,17 +133,16 @@ class kafkaConsumer:
 
 	def _insertMySql(self, msgList):
 		msgJson = []
-		mm = self.mySql
+		mySql	= self.mySql
 		
-		for m in msgList:
-			try: msgJson.append(json.loads(m.decode('utf-8')))
+		for msg in msgList:
+			try: msgJson.append(json.loads(msg.decode('utf-8')))
 			except: 
 				logging.info('Broken json from kafka ')
-				logging.info(m)
-				#print(m)
+				logging.info(msg)
 		
 		list_dict = self._cleanJson(msgJson)
-		mm.sqlBulkInsert(list_dict)
+		mySql.sqlBulkInsert(list_dict)
 
 		return
 
@@ -151,8 +150,6 @@ class kafkaConsumer:
 	def consume(self):
 		client		= KafkaClient(hosts=self.kafkaHost)
 		topic		= client.topics[self.kafkaTopic]
-		#consumer	= topic.get_simple_consumer()
-
 
 		balanced_cons	= topic.get_balanced_consumer(
 					consumer_group=ZOO_GROUP, 
@@ -160,6 +157,7 @@ class kafkaConsumer:
 					zookeeper_connect=ZOO_HOST)
 
 		msgList		= []
+
 
 		for message in balanced_cons:
 			if message is not None:
